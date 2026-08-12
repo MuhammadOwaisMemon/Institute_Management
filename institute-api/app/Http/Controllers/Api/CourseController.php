@@ -30,7 +30,7 @@ class CourseController extends ApiController
                 });
             })
             ->latest()
-            ->paginate((int) $request->query('per_page', 10));
+            ->paginate($this->perPage($request));
 
         return $this->success(
             CourseResource::collection($courses)->resolve(),
@@ -71,5 +71,10 @@ class CourseController extends ApiController
         $course->save();
 
         return $this->success(new CourseResource($course->fresh()), 'Course updated.');
+    }
+
+    private function perPage(Request $request): int
+    {
+        return min(max((int) $request->query('per_page', 10), 1), 100);
     }
 }

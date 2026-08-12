@@ -29,7 +29,7 @@ class StoreEnrollmentRequest extends FormRequest
             'agreed_course_fee' => ['required', 'numeric', 'min:0'],
             'admission_fee' => ['nullable', 'numeric', 'min:0'],
             'discount_type' => ['nullable', Rule::in(['fixed', 'percentage'])],
-            'discount_value' => ['nullable', 'numeric', 'min:0'],
+            'discount_value' => ['nullable', 'numeric', 'min:0', 'required_with:discount_type'],
             'status' => ['required', Rule::in(['active', 'completed', 'dropped', 'cancelled'])],
             'completion_date' => ['nullable', 'date', 'after_or_equal:enrollment_date'],
             'notes' => ['nullable', 'string', 'max:1000'],

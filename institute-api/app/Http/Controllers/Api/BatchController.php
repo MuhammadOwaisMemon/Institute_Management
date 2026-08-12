@@ -37,7 +37,7 @@ class BatchController extends ApiController
                 });
             })
             ->latest()
-            ->paginate((int) $request->query('per_page', 10));
+            ->paginate($this->perPage($request));
 
         return $this->success(
             BatchResource::collection($batches)->resolve(),
@@ -74,5 +74,10 @@ class BatchController extends ApiController
         $batch->save();
 
         return $this->success(new BatchResource($batch->fresh()->load(['course', 'teacher'])), 'Batch updated.');
+    }
+
+    private function perPage(Request $request): int
+    {
+        return min(max((int) $request->query('per_page', 10), 1), 100);
     }
 }

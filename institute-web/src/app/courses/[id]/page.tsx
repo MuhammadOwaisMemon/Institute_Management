@@ -2,6 +2,10 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageContainer } from "@/components/layout/page-container";
 import { CourseDetailPage } from "@/features/courses/course-detail-page";
 
+export function generateStaticParams() {
+  return Array.from({ length: 200 }, (_, index) => ({ id: String(index + 1) }));
+}
+
 export default async function CourseDetailRoutePage({ params }: PageProps<"/courses/[id]">) {
   const { id } = await params;
 

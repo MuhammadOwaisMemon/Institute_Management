@@ -14,7 +14,7 @@ class BulkSaveAttendanceRequest extends FormRequest
             'batch_id' => ['required', Rule::exists('batches','id')->where('institute_id', $this->user()->institute_id)],
             'attendance_date' => ['required','date'],
             'records' => ['required','array','min:1'],
-            'records.*.student_id' => ['required', Rule::exists('students','id')->where('institute_id', $this->user()->institute_id)],
+            'records.*.student_id' => ['required', 'distinct', Rule::exists('students','id')->where('institute_id', $this->user()->institute_id)],
             'records.*.status' => ['required', Rule::in(['present','absent','leave'])],
             'records.*.remarks' => ['nullable','string','max:500'],
         ];

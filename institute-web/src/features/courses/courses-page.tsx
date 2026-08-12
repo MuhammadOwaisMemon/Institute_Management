@@ -12,6 +12,8 @@ import { ErrorState } from "@/components/feedback/error-state";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { CourseFormDialog } from "./course-form-dialog";
 import { getCourses, type Course } from "./courses-api";
 
@@ -30,9 +32,10 @@ function formatDuration(course: Course) {
 export function CoursesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim());
   const coursesQuery = useQuery({
-    queryKey: ["courses", search, status],
-    queryFn: () => getCourses({ search, status }),
+    queryKey: ["courses", debouncedSearch, status],
+    queryFn: () => getCourses({ search: debouncedSearch, status }),
   });
 
   const columns: Column<Course>[] = [
@@ -78,13 +81,13 @@ export function CoursesPage() {
         }
       />
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search courses" />
-          <select className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" value={status} onChange={(event) => setStatus(event.target.value)}>
+        <div className="mb-5 grid gap-3 md:grid-cols-[1fr_220px]">
+          <Field label="Search courses"><SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search courses" /></Field>
+          <Field label="Status"><select className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" value={status} onChange={(event) => setStatus(event.target.value)}>
             <option value="">All statuses</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-          </select>
+          </select></Field>
         </div>
         {coursesQuery.isLoading ? <LoadingSkeleton className="h-64" /> : null}
         {coursesQuery.isError ? <ErrorState title="Courses could not load" description="Please check your access and try again." onRetry={() => coursesQuery.refetch()} /> : null}

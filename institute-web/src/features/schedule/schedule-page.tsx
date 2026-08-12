@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageHeader } from "@/components/layout/page-header";
+import { Field } from "@/components/ui/field";
 import { getBatches, type Batch, type Weekday } from "@/features/batches/batches-api";
 import { getCourses } from "@/features/courses/courses-api";
 import { getTeachers } from "@/features/teachers/teachers-api";
@@ -25,10 +26,10 @@ export function SchedulePage() {
       <PageHeader title="Class Schedule" description="Daily and weekly timetable from active batch schedules." />
       <section className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="grid gap-3 md:grid-cols-4">
-          <Select value={filters.values.teacher_id ?? ""} onChange={(value) => filters.set("teacher_id", value)} label="All teachers" options={teachers.data?.data.map((teacher) => ({ label: teacher.full_name, value: String(teacher.id) })) ?? []} />
-          <Select value={filters.values.course_id ?? ""} onChange={(value) => filters.set("course_id", value)} label="All courses" options={courses.data?.data.map((course) => ({ label: course.name, value: String(course.id) })) ?? []} />
-          <Select value={filters.values.batch_id ?? ""} onChange={(value) => filters.set("batch_id", value)} label="All batches" options={batches.data?.data.map((batch) => ({ label: batch.name, value: String(batch.id) })) ?? []} />
-          <Select value={filters.values.day ?? ""} onChange={(value) => filters.set("day", value)} label="All days" options={days.map((day) => ({ label: title(day), value: day }))} />
+          <Field label="Teacher"><Select value={filters.values.teacher_id ?? ""} onChange={(value) => filters.set("teacher_id", value)} label="All teachers" options={teachers.data?.data.map((teacher) => ({ label: teacher.full_name, value: String(teacher.id) })) ?? []} /></Field>
+          <Field label="Course"><Select value={filters.values.course_id ?? ""} onChange={(value) => filters.set("course_id", value)} label="All courses" options={courses.data?.data.map((course) => ({ label: course.name, value: String(course.id) })) ?? []} /></Field>
+          <Field label="Batch"><Select value={filters.values.batch_id ?? ""} onChange={(value) => filters.set("batch_id", value)} label="All batches" options={batches.data?.data.map((batch) => ({ label: batch.name, value: String(batch.id) })) ?? []} /></Field>
+          <Field label="Day"><Select value={filters.values.day ?? ""} onChange={(value) => filters.set("day", value)} label="All days" options={days.map((day) => ({ label: title(day), value: day }))} /></Field>
         </div>
       </section>
 
@@ -79,7 +80,7 @@ function useScheduleFilters() {
 }
 
 function Select({ value, onChange, label, options }: { value: string; onChange: (value: string) => void; label: string; options: { label: string; value: string }[] }) {
-  return <select className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700" value={value} onChange={(event) => onChange(event.target.value)}><option value="">{label}</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>;
+  return <select className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700" value={value} onChange={(event) => onChange(event.target.value)}><option value="">{label}</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>;
 }
 
 function ClassCard({ batch }: { batch: Batch }) {
@@ -102,7 +103,7 @@ function CompactClassCard({ batch }: { batch: Batch }) {
       <p className="text-sm font-semibold text-slate-950">{batch.course?.name ?? "Course"}</p>
       <p className="mt-1 text-xs text-slate-500">{batch.name}</p>
       <p className="mt-2 text-xs font-medium text-slate-700">{formatTime(batch.start_time)} - {formatTime(batch.end_time)}</p>
-      <p className="mt-1 text-xs text-slate-500">{batch.teacher?.full_name ?? "Unassigned"} · {batch.room ?? "No room"}</p>
+      <p className="mt-1 text-xs text-slate-500">{batch.teacher?.full_name ?? "Unassigned"} | {batch.room ?? "No room"}</p>
     </div>
   );
 }

@@ -39,7 +39,7 @@ Frontend:
 
 ## Completed Prompts
 
-Completed through **Prompt 13 - Class Schedule**.
+Completed through **Prompt 26 - Final End-to-End System Review**.
 
 Implemented:
 
@@ -58,6 +58,36 @@ Implemented:
 - Payments and printable receipts
 - Attendance
 - Class schedule
+- Dashboard with live KPIs, quick actions, operational lists, and monthly fee collection chart
+- Reports with filters, pagination, totals, and CSV export
+- Exams and results with quick marks entry, bulk save, percentage calculation, and result history
+- Course completion certificates with generated numbers, printable template, and student certificate history
+- Global header search for students, codes, phones, courses, and batches with grouped results
+- Lightweight internal alerts for overdue fees, due installments, and batch timing reminders with read tracking
+- Admin-only activity log for important student, enrollment, payment, attendance, and user actions
+- Frontend UI/UX polish across shared layout, navigation, tables, forms, filters, dialogs, loaders, empty states, and daily receptionist workflows
+- Backend security and data-integrity hardening for institute isolation, payment/fee calculations, attendance membership, history endpoints, and report subqueries
+- Backend/frontend performance optimization for dashboard aggregation, report totals, search/list pagination, useful database indexes, frontend query caching, debounced searches, and mutation invalidation
+- Practical automated tests for auth workflows, unauthenticated access, financial flows, fee calculations, installment/payment balances, duplicate attendance validation, and critical frontend admission/payment forms
+- Realistic development seed data for Bright Future Institute with Pakistani demo users, courses, batches, students, enrollments, installments, payments, attendance, exams/results, and certificates
+- Development-only demo login documentation in `DEMO_DATA.md`
+- Final production-style review documented in `FINAL_SYSTEM_REVIEW.md`
+- End-to-end backend flow test covering login through certificate generation
+- Certificate business rule tightened so certificates require completed enrollments
+
+## Performance Notes
+
+Important Prompt 23 improvements:
+
+- Dashboard monthly fee chart now uses SQL grouping instead of loading all recent payments into PHP.
+- Dashboard class count avoids eager loading relationships for count-only queries.
+- Pending fee report total remaining is calculated with a SQL aggregate instead of hydrating all matching enrollments.
+- Core list endpoints cap `per_page` to a maximum of 100.
+- Global search caps term length and uses escaped/prefix LIKE matching for code-like fields.
+- Added composite indexes for common dashboard, reports, search, attendance, exams, certificates, alerts, payments, and activity-log filters.
+- Frontend TanStack Query defaults now keep data fresh briefly and reduce repeated refetches during normal navigation.
+- Search inputs on large/list pages are debounced to reduce duplicate API calls.
+- Payment, fee, and admission mutations invalidate dependent dashboard, alerts, reports, and list queries.
 
 ## Current Modules
 
@@ -75,6 +105,14 @@ Backend modules:
 - Payments
 - Attendance
 - Schedule
+- Dashboard
+- Reports
+- Exams
+- Results
+- Certificates
+- Global Search
+- Internal Alerts
+- Activity Log
 
 Frontend routes:
 
@@ -98,6 +136,12 @@ Frontend routes:
 - `/payments/receipts/[id]`
 - `/attendance`
 - `/schedule`
+- `/reports`
+- `/exams`
+- `/certificates`
+- `/certificates/[id]`
+- `/alerts`
+- `/settings/activity-log`
 
 ## Roles
 
@@ -133,20 +177,52 @@ Teacher-specific restrictions already exist for:
 
 ## Verification Status
 
-Latest successful checks after Prompt 13:
+Latest checks after Prompt 26:
 
 Backend:
 
 ```bash
-php artisan test
+APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= php artisan test
 ```
 
 Result:
 
-- 29 tests passed
-- 63 assertions
+- 63 tests completed successfully
+- 228 assertions
+- Warning only because fresh clone does not have a local `.env` file yet
+
+Seeder smoke:
+
+```bash
+APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan migrate:fresh --seed --force
+```
+
+Result:
+
+- Passed successfully against an in-memory SQLite database
+
+Security dependency audit:
+
+```bash
+composer audit
+```
+
+Result:
+
+- No security vulnerability advisories found
 
 Frontend:
+
+```bash
+npm test
+```
+
+Result:
+
+- 2 test files passed
+- 2 tests passed
+
+Frontend build:
 
 ```bash
 npm run build
@@ -166,7 +242,17 @@ Result:
 
 - Passed cleanly
 
-Local smoke:
+Focused frontend type check:
+
+```bash
+.\node_modules\.bin\tsc.cmd --noEmit
+```
+
+Result:
+
+- Covered by successful `npm run build`
+
+Previous local smoke after Prompt 13:
 
 - `http://127.0.0.1:8000/api/health` returned healthy
 - `http://127.0.0.1:3000/schedule` returned 200
@@ -176,7 +262,7 @@ Local smoke:
 When continuing in a new Codex chat, use:
 
 ```text
-Continue this Institute Management project from Prompt 14.
+Continue this Institute Management project from Prompt 27.
 Read PROJECT_PROGRESS.md and ARCHITECTURE.md first.
 Do not rebuild completed modules.
 Follow existing Laravel and Next.js patterns.

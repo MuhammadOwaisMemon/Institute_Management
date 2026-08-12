@@ -35,7 +35,7 @@ class TeacherController extends ApiController
                 });
             })
             ->latest()
-            ->paginate((int) $request->query('per_page', 10));
+            ->paginate($this->perPage($request));
 
         return $this->success(
             TeacherResource::collection($teachers)->resolve(),
@@ -72,5 +72,10 @@ class TeacherController extends ApiController
         $teacher->save();
 
         return $this->success(new TeacherResource($teacher->fresh()->load('user')), 'Teacher updated.');
+    }
+
+    private function perPage(Request $request): int
+    {
+        return min(max((int) $request->query('per_page', 10), 1), 100);
     }
 }

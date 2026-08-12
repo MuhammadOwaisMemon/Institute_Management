@@ -1,7 +1,9 @@
 import { apiClient, type ApiResponse } from "@/lib/api/client";
+import type { Batch } from "@/features/batches/batches-api";
 import type { Student } from "@/features/students/students-api";
 
 export type AttendanceStatus = "present" | "absent" | "leave";
+export type Attendance = { id: number; batch_id: number; student_id: number; attendance_date: string; status: AttendanceStatus; remarks: string | null; student?: Student; batch?: Batch };
 export type AttendanceRow = { student: Student; attendance: { status: AttendanceStatus; remarks: string | null } | null };
 export async function loadAttendanceStudents(batch_id: string, attendance_date: string) {
   const r = await apiClient.get<ApiResponse<AttendanceRow[]>>("/attendance/students", { params: { batch_id, attendance_date } });

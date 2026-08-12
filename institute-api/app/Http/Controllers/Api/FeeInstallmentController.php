@@ -37,7 +37,10 @@ class FeeInstallmentController extends ApiController
     {
         $installment = DB::transaction(function () use ($request) {
             $enrollment = Enrollment::where('institute_id', $request->user()->institute_id)->lockForUpdate()->findOrFail($request->validated('enrollment_id'));
-            $scheduled = (float) FeeInstallment::where('enrollment_id', $enrollment->id)->sum('amount');
+            if ($enrollment->status !== 'active') {
+                throw ValidationException::withMessages(['enrollment_id' => ['Installments can only be created for active enrollments.']]);
+            }
+            $scheduled = (float) FeeInstallment::where('institute_id', $request->user()->institute_id)->where('enrollment_id', $enrollment->id)->lockForUpdate()->sum('amount');
             $amount = (float) $request->validated('amount');
             if ($scheduled + $amount > (float) $enrollment->final_course_fee) {
                 throw ValidationException::withMessages(['amount' => ['Installment total cannot exceed final payable amount.']]);
@@ -51,7 +54,7 @@ class FeeInstallmentController extends ApiController
     {
         abort_unless($enrollment->institute_id === $request->user()->institute_id, 403);
         $this->refreshOverdue($request->user()->institute_id);
-        $items = $enrollment->installments()->orderBy('due_date')->get();
+        $items = $enrollment->installments()->where('institute_id', $request->user()->institute_id)->orderBy('due_date')->get();
         $paid = (float) $items->sum('paid_amount');
         return $this->success([
             'enrollment' => new EnrollmentResource($enrollment->load(['student', 'course', 'batch'])),

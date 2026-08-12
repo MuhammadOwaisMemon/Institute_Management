@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Enrollment extends Model
 {
@@ -27,4 +28,5 @@ class Enrollment extends Model
     public function batch(): BelongsTo { return $this->belongsTo(Batch::class); }
     public function installments(): HasMany { return $this->hasMany(FeeInstallment::class); }
     public function payments(): HasMany { return $this->hasMany(Payment::class); }
+    public function certificate(): HasOne { return $this->hasOne(Certificate::class); }
 }

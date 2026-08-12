@@ -18,6 +18,22 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+select,
+textarea {
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  outline: none;
+}
+
+select:focus,
+textarea:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 2px #f1f5f9;
+}
+
 button {
   cursor: pointer;
 }

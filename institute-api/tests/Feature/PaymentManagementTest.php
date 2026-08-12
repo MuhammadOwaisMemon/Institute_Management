@@ -30,4 +30,65 @@ class PaymentManagementTest extends TestCase
         [$u,$e,$inst]=$this->setupEnrollment();
         $this->actingAs($u)->postJson('/api/payments',['enrollment_id'=>$e->id,'installment_id'=>$inst->id,'amount'=>1200,'payment_date'=>'2026-08-11','payment_method'=>'cash'])->assertUnprocessable();
     }
+
+    public function test_partial_and_full_payments_update_remaining_balance_and_installment_status(): void
+    {
+        [$user, $enrollment, $installment] = $this->setupEnrollment();
+
+        $this->actingAs($user)->postJson('/api/payments', [
+            'enrollment_id' => $enrollment->id,
+            'installment_id' => $installment->id,
+            'amount' => 300,
+            'payment_date' => '2026-08-11',
+            'payment_method' => 'cash',
+        ])->assertCreated();
+
+        $this->actingAs($user)->getJson("/api/enrollments/{$enrollment->id}/outstanding")
+            ->assertOk()
+            ->assertJsonPath('data.total_fee', '1000.00')
+            ->assertJsonPath('data.total_paid', '300.00')
+            ->assertJsonPath('data.remaining_balance', '700.00');
+
+        $this->assertDatabaseHas('fee_installments', [
+            'id' => $installment->id,
+            'paid_amount' => 300,
+            'status' => 'partially_paid',
+        ]);
+
+        $this->actingAs($user)->postJson('/api/payments', [
+            'enrollment_id' => $enrollment->id,
+            'installment_id' => $installment->id,
+            'amount' => 700,
+            'payment_date' => '2026-08-12',
+            'payment_method' => 'bank_transfer',
+        ])->assertCreated()->assertJsonPath('data.receipt_number', 'RCP-000002');
+
+        $this->actingAs($user)->getJson("/api/enrollments/{$enrollment->id}/outstanding")
+            ->assertOk()
+            ->assertJsonPath('data.total_paid', '1000.00')
+            ->assertJsonPath('data.remaining_balance', '0.00');
+
+        $this->assertDatabaseHas('fee_installments', [
+            'id' => $installment->id,
+            'paid_amount' => 1000,
+            'status' => 'paid',
+        ]);
+    }
+
+    public function test_general_payment_without_installment_still_reduces_enrollment_balance(): void
+    {
+        [$user, $enrollment] = $this->setupEnrollment();
+
+        $this->actingAs($user)->postJson('/api/payments', [
+            'enrollment_id' => $enrollment->id,
+            'amount' => 250,
+            'payment_date' => '2026-08-11',
+            'payment_method' => 'cash',
+        ])->assertCreated();
+
+        $this->actingAs($user)->getJson("/api/enrollments/{$enrollment->id}/outstanding")
+            ->assertOk()
+            ->assertJsonPath('data.total_paid', '250.00')
+            ->assertJsonPath('data.remaining_balance', '750.00');
+    }
 }

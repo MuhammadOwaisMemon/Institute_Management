@@ -8,12 +8,19 @@ use App\Http\Resources\StudentResource;
 use App\Models\Attendance;
 use App\Models\Batch;
 use App\Models\Enrollment;
+use App\Models\Student;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AttendanceController extends ApiController
 {
+    public function __construct(private readonly ActivityLogger $activity)
+    {
+    }
+
     public function students(Request $request): JsonResponse
     {
         $batch = $this->authorizedBatch($request, (int) $request->query('batch_id'));
@@ -29,7 +36,18 @@ class AttendanceController extends ApiController
         DB::transaction(function() use ($request,$batch) {
             $date = $request->validated('attendance_date');
 
+            $studentIds = Enrollment::where('institute_id', $request->user()->institute_id)
+                ->where('batch_id', $batch->id)
+                ->where('status', 'active')
+                ->whereDate('enrollment_date', '<=', $date)
+                ->pluck('student_id')
+                ->all();
+
             foreach ($request->validated('records') as $record) {
+                if (! in_array((int) $record['student_id'], $studentIds, true)) {
+                    throw ValidationException::withMessages(['records' => ['Student does not have an active enrollment in this batch for the selected date.']]);
+                }
+
                 $attendance = Attendance::where('batch_id',$batch->id)
                     ->where('student_id',$record['student_id'])
                     ->whereDate('attendance_date',$date)
@@ -47,6 +65,12 @@ class AttendanceController extends ApiController
                 ])->save();
             }
         });
+        $this->activity->log($request, 'attendance.updated', $batch, "Attendance updated for {$batch->name}.", [
+            'batch_id' => $batch->id,
+            'attendance_date' => $request->validated('attendance_date'),
+            'records' => count($request->validated('records')),
+        ]);
+
         return $this->success(null, 'Attendance saved.');
     }
 
@@ -59,6 +83,7 @@ class AttendanceController extends ApiController
 
     public function studentHistory(Request $request, int $studentId): JsonResponse
     {
+        Student::where('institute_id', $request->user()->institute_id)->findOrFail($studentId);
         $items = Attendance::with('batch.course')->where('institute_id',$request->user()->institute_id)->where('student_id',$studentId)->latest('attendance_date')->get();
         $total = max(1, $items->count());
         $percentage = round(($items->where('status','present')->count() / $total) * 100, 2);

@@ -12,15 +12,17 @@ import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getUsers, type ManagedUser } from "./users-api";
 import { UserFormDialog } from "./user-form-dialog";
 
 export function UsersPage() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim());
   const auth = useAuth();
   const usersQuery = useQuery({
-    queryKey: ["users", search],
-    queryFn: () => getUsers(search),
+    queryKey: ["users", debouncedSearch],
+    queryFn: () => getUsers(debouncedSearch),
     enabled: auth.data?.role === "admin",
   });
 

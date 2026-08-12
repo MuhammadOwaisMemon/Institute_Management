@@ -12,15 +12,18 @@ import { ErrorState } from "@/components/feedback/error-state";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getTeachers, type Teacher } from "./teachers-api";
 import { TeacherFormDialog } from "./teacher-form-dialog";
 
 export function TeachersPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim());
   const teachersQuery = useQuery({
-    queryKey: ["teachers", search, status],
-    queryFn: () => getTeachers({ search, status }),
+    queryKey: ["teachers", debouncedSearch, status],
+    queryFn: () => getTeachers({ search: debouncedSearch, status }),
   });
 
   const columns: Column<Teacher>[] = [
@@ -66,13 +69,13 @@ export function TeachersPage() {
         }
       />
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search teachers" />
-          <select className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" value={status} onChange={(event) => setStatus(event.target.value)}>
+        <div className="mb-5 grid gap-3 md:grid-cols-[1fr_220px]">
+          <Field label="Search teachers"><SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search teachers" /></Field>
+          <Field label="Status"><select className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" value={status} onChange={(event) => setStatus(event.target.value)}>
             <option value="">All statuses</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-          </select>
+          </select></Field>
         </div>
         {teachersQuery.isLoading ? <LoadingSkeleton className="h-64" /> : null}
         {teachersQuery.isError ? <ErrorState title="Teachers could not load" description="Please check your access and try again." onRetry={() => teachersQuery.refetch()} /> : null}

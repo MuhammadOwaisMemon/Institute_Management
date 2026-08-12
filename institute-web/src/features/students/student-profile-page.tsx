@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Camera, ClipboardCheck, CreditCard, Edit, Receipt, UserRound } from "lucide-react";
+import { Award, BookOpen, Camera, ClipboardCheck, CreditCard, Edit, Receipt, UserRound } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -11,14 +12,16 @@ import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/data/status-badge";
+import { getStudentCertificates } from "@/features/certificates/certificates-api";
 import { StudentFormDialog } from "./student-form-dialog";
 import { getStudent, uploadStudentPhoto, type StudentStatus } from "./students-api";
 
-const tabs = ["Overview", "Courses", "Attendance", "Fees", "Payments"];
+const tabs = ["Overview", "Courses", "Attendance", "Fees", "Payments", "Certificates"];
 const map: Record<StudentStatus, "active" | "inactive" | "danger"> = { active: "active", completed: "inactive", dropped: "danger", inactive: "inactive" };
 export function StudentProfilePage({ id }: { id: number }) {
   const [tab, setTab] = useState("Overview"); const qc = useQueryClient();
   const q = useQuery({ queryKey: ["student", id], queryFn: () => getStudent(id) });
+  const certificates = useQuery({ queryKey: ["student-certificates", id], queryFn: () => getStudentCertificates(id), enabled: tab === "Certificates" });
   const photo = useMutation({ mutationFn: (file: File) => uploadStudentPhoto(id, file), onSuccess: (s) => { qc.setQueryData(["student", id], s); toast.success("Photo updated."); }, onError: () => toast.error("Could not upload photo.") });
   if (q.isLoading) return <LoadingSkeleton className="h-96" />;
   if (q.isError || !q.data) return <ErrorState title="Student not found" description="This student profile could not be loaded." />;
@@ -40,7 +43,30 @@ export function StudentProfilePage({ id }: { id: number }) {
         {tab === "Attendance" ? <EmptyState icon={ClipboardCheck} title="No attendance yet" description="Attendance will appear after the attendance module is added." /> : null}
         {tab === "Fees" ? <EmptyState icon={Receipt} title="No fee records yet" description="Fee schedules will appear after enrollment and fee workflows are added." /> : null}
         {tab === "Payments" ? <EmptyState icon={CreditCard} title="No payments yet" description="Payments will appear after payment collection is implemented." /> : null}
+        {tab === "Certificates" ? <CertificateHistory certificates={certificates.data ?? []} isLoading={certificates.isLoading} /> : null}
       </div>
     </section>
   </>;
+}
+
+function CertificateHistory({ certificates, isLoading }: { certificates: { id: number; certificate_number: string; course?: { name: string }; completion_date: string; issue_date: string }[]; isLoading: boolean }) {
+  if (isLoading) {
+    return <LoadingSkeleton className="h-40" />;
+  }
+
+  if (!certificates.length) {
+    return <EmptyState icon={Award} title="No certificates yet" description="Generated course completion certificates will appear here." />;
+  }
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {certificates.map((certificate) => (
+        <Link key={certificate.id} href={`/certificates/${certificate.id}`} className="rounded-lg border border-slate-100 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
+          <p className="text-sm font-semibold text-slate-950">{certificate.certificate_number}</p>
+          <p className="mt-1 text-sm text-slate-500">{certificate.course?.name ?? "Course"}</p>
+          <p className="mt-3 text-xs text-slate-500">Completed {certificate.completion_date} | Issued {certificate.issue_date}</p>
+        </Link>
+      ))}
+    </div>
+  );
 }

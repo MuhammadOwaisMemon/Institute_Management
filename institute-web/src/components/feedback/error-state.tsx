@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export function ErrorState({ title, description, onRetry }: { title: string; description: string; onRetry?: () => void }) {
   return (
-    <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-red-950">
+    <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-red-950 shadow-sm">
       <div className="flex gap-3">
         <AlertCircle className="mt-0.5 h-5 w-5" />
         <div>

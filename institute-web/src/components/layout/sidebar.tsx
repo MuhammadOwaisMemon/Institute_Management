@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CalendarClock, CalendarDays, GraduationCap, LayoutDashboard, Receipt, Settings, UserCog, UserPlus, UserRoundCheck, Users } from "lucide-react";
+import { Award, BarChart3, BookOpen, CalendarClock, CalendarDays, ClipboardList, GraduationCap, History, LayoutDashboard, Receipt, Settings, UserCog, UserPlus, UserRoundCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -14,10 +14,14 @@ const navItems = [
   { label: "Batches", icon: CalendarDays, href: "/batches", permissions: ["*", "batches", "batches.view", "batches.own"] },
   { label: "Schedule", icon: CalendarClock, href: "/schedule", permissions: ["*", "schedule"] },
   { label: "Attendance", icon: CalendarDays, href: "/attendance", permissions: ["*", "attendance"] },
+  { label: "Exams", icon: ClipboardList, href: "/exams", permissions: ["*", "exams", "results.later"] },
+  { label: "Certificates", icon: Award, href: "/certificates", permissions: ["*", "certificates"] },
   { label: "Fees", icon: Receipt, href: "/fees", permissions: ["*", "fees", "payments"] },
   { label: "Payments", icon: Receipt, href: "/payments", permissions: ["*", "payments"] },
+  { label: "Reports", icon: BarChart3, href: "/reports", permissions: ["*", "reports.allowed"] },
   { label: "Settings", icon: Settings, href: "/settings/institute-profile", permissions: ["*"] },
   { label: "Users", icon: UserCog, href: "/settings/users", permissions: ["*"] },
+  { label: "Activity Log", icon: History, href: "/settings/activity-log", permissions: ["*"] },
 ];
 
 export function Sidebar({ className }: { className?: string }) {

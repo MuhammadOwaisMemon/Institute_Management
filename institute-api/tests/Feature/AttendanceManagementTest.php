@@ -35,4 +35,22 @@ class AttendanceManagementTest extends TestCase
         $other=Batch::factory()->forInstitute($i)->create();
         $this->actingAs($u)->getJson("/api/attendance/students?batch_id={$other->id}&attendance_date=2026-08-11")->assertForbidden();
     }
+
+    public function test_duplicate_students_in_attendance_payload_are_rejected(): void
+    {
+        $i=Institute::factory()->create(); $u=User::factory()->create(['institute_id'=>$i->id,'role'=>'admin']);
+        $s=Student::factory()->create(['institute_id'=>$i->id]); $c=Course::factory()->create(['institute_id'=>$i->id]); $b=Batch::factory()->forInstitute($i)->create(['course_id'=>$c->id]);
+        Enrollment::create(['institute_id'=>$i->id,'student_id'=>$s->id,'course_id'=>$c->id,'batch_id'=>$b->id,'enrollment_date'=>'2026-08-01','agreed_course_fee'=>100,'admission_fee'=>0,'discount_value'=>0,'final_course_fee'=>100,'status'=>'active']);
+
+        $this->actingAs($u)->postJson('/api/attendance', [
+            'batch_id' => $b->id,
+            'attendance_date' => '2026-08-11',
+            'records' => [
+                ['student_id' => $s->id, 'status' => 'present'],
+                ['student_id' => $s->id, 'status' => 'absent'],
+            ],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['records.0.student_id']);
+
+        $this->assertDatabaseCount('attendances', 0);
+    }
 }
