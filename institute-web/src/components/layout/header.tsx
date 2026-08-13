@@ -1,7 +1,8 @@
-import { Menu, Search, UserRound } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertBell } from "@/features/alerts/alert-bell";
 import { GlobalSearch } from "@/features/search/global-search";
+import { UserMenu } from "./user-menu";
 
 export function Header() {
   return (
@@ -21,9 +22,7 @@ export function Header() {
           <Search className="h-5 w-5" />
         </Button>
         <AlertBell />
-        <Button variant="outline" size="icon">
-          <UserRound className="h-5 w-5" />
-        </Button>
+        <UserMenu />
       </div>
     </header>
   );

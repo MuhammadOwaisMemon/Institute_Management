@@ -92,7 +92,11 @@ export function InstituteProfileForm() {
     mutationFn: uploadInstituteLogo,
     onSuccess: (profile) => {
       queryClient.setQueryData(["institute-profile"], profile);
+      queryClient.invalidateQueries({ queryKey: ["institute-profile"] });
       toast.success("Logo updated.");
+    },
+    onError: () => {
+      toast.error("Logo could not be uploaded. Use a JPG, PNG, or WEBP image between 80x80 and 2 MB.");
     },
   });
 
@@ -228,7 +232,7 @@ export function InstituteProfileForm() {
             <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800">
               {logoMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageUp className="h-4 w-4" />}
               Upload logo
-              <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(event) => onLogoChange(event.target.files?.[0])} />
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={logoMutation.isPending} onChange={(event) => onLogoChange(event.target.files?.[0])} />
             </label>
             <FieldHint className="mt-2">JPG, PNG, or WEBP. Max 2 MB.</FieldHint>
           </div>

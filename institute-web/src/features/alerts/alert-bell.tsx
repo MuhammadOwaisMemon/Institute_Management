@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getAlerts, markAlertRead, type InternalAlert } from "./alerts-api";
+import { toast } from "sonner";
 
 export function AlertBell() {
   const [open, setOpen] = useState(false);
@@ -14,7 +15,28 @@ export function AlertBell() {
   const alerts = useQuery({ queryKey: ["alerts"], queryFn: getAlerts, refetchOnWindowFocus: true, staleTime: 60_000 });
   const read = useMutation({
     mutationFn: markAlertRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["alerts"] }),
+    onMutate: async (key) => {
+      await queryClient.cancelQueries({ queryKey: ["alerts"] });
+      const previous = queryClient.getQueryData<Awaited<ReturnType<typeof getAlerts>>>(["alerts"]);
+
+      if (previous) {
+        queryClient.setQueryData<Awaited<ReturnType<typeof getAlerts>>>(["alerts"], {
+          ...previous,
+          unread_count: Math.max(0, previous.unread_count - (previous.alerts.find((alert) => alert.key === key && !alert.is_read) ? 1 : 0)),
+          alerts: previous.alerts.map((alert) => (alert.key === key ? { ...alert, is_read: true, read_at: new Date().toISOString() } : alert)),
+        });
+      }
+
+      return { previous };
+    },
+    onError: (_error, _key, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["alerts"], context.previous);
+      }
+
+      toast.error("Alert could not be marked as read.");
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["alerts"] }),
   });
 
   const unread = alerts.data?.unread_count ?? 0;
@@ -36,7 +58,7 @@ export function AlertBell() {
           {!alerts.isLoading && !items.length ? <div className="p-4 text-sm text-slate-500">No alerts right now.</div> : null}
           {items.length ? (
             <div className="max-h-96 overflow-y-auto p-2">
-              {items.map((alert) => <AlertItem key={alert.key} alert={alert} onRead={() => read.mutate(alert.key)} onClose={() => setOpen(false)} />)}
+              {items.map((alert) => <AlertItem key={alert.key} alert={alert} isReading={read.isPending && read.variables === alert.key} onRead={() => read.mutate(alert.key)} onClose={() => setOpen(false)} />)}
             </div>
           ) : null}
         </div>
@@ -45,7 +67,7 @@ export function AlertBell() {
   );
 }
 
-function AlertItem({ alert, onRead, onClose }: { alert: InternalAlert; onRead: () => void; onClose: () => void }) {
+function AlertItem({ alert, isReading, onRead, onClose }: { alert: InternalAlert; isReading: boolean; onRead: () => void; onClose: () => void }) {
   return (
     <div className={cn("rounded-lg p-3", alert.is_read ? "bg-white" : "bg-slate-50")}>
       <Link href={alert.href} onClick={() => { onRead(); onClose(); }} className="block">
@@ -58,7 +80,7 @@ function AlertItem({ alert, onRead, onClose }: { alert: InternalAlert; onRead: (
           </div>
         </div>
       </Link>
-      {!alert.is_read ? <button className="ml-4 mt-2 text-xs font-medium text-slate-500 hover:text-slate-950" onClick={onRead}>Mark as read</button> : null}
+      {!alert.is_read ? <button className="ml-4 mt-2 text-xs font-medium text-slate-500 hover:text-slate-950 disabled:opacity-50" disabled={isReading} onClick={onRead}>{isReading ? "Marking..." : "Mark as read"}</button> : null}
     </div>
   );
 }

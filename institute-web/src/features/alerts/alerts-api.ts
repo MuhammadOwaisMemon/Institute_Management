@@ -1,4 +1,4 @@
-import { apiClient, type ApiResponse } from "@/lib/api/client";
+import { apiClient, getCsrfCookie, type ApiResponse } from "@/lib/api/client";
 
 export type InternalAlert = {
   key: string;
@@ -22,5 +22,6 @@ export async function getAlerts() {
 }
 
 export async function markAlertRead(key: string) {
+  await getCsrfCookie();
   await apiClient.post<ApiResponse<null>>("/alerts/read", { key });
 }

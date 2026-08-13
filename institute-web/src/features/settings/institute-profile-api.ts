@@ -1,4 +1,4 @@
-import { apiClient, type ApiResponse } from "@/lib/api/client";
+import { apiClient, getCsrfCookie, type ApiResponse } from "@/lib/api/client";
 
 export type InstituteProfile = {
   id: number;
@@ -25,11 +25,13 @@ export async function getInstituteProfile() {
 }
 
 export async function updateInstituteProfile(payload: InstituteProfilePayload) {
+  await getCsrfCookie();
   const response = await apiClient.put<ApiResponse<InstituteProfile>>("/settings/institute-profile", payload);
   return response.data.data;
 }
 
 export async function uploadInstituteLogo(file: File) {
+  await getCsrfCookie();
   const formData = new FormData();
   formData.append("logo", file);
 

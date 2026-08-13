@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
 
 const authTokenKey = "institute-auth-token";
 
@@ -46,7 +46,19 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error?.config as (InternalAxiosRequestConfig & { _csrfRetry?: boolean }) | undefined;
+    const method = originalRequest?.method?.toLowerCase();
+    const isMutation = method ? ["post", "put", "patch", "delete"].includes(method) : false;
+
+    if (error?.response?.status === 419 && originalRequest && isMutation && !originalRequest._csrfRetry) {
+      originalRequest._csrfRetry = true;
+      await getCsrfCookie();
+      delete originalRequest.headers["X-XSRF-TOKEN"];
+      delete originalRequest.headers["x-xsrf-token"];
+      return apiClient(originalRequest);
+    }
+
     if (error?.response?.status === 401) {
       setAuthToken(null);
 
