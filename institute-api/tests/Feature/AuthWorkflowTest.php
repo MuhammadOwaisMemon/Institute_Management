@@ -21,14 +21,20 @@ class AuthWorkflowTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'admin@example.com',
             'password' => 'secret-password',
         ])->assertOk()
             ->assertJsonPath('data.id', $user->id)
-            ->assertJsonPath('data.email', 'admin@example.com');
+            ->assertJsonPath('data.email', 'admin@example.com')
+            ->assertJsonStructure(['meta' => ['token']]);
 
         $this->getJson('/api/auth/user')
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->id);
+
+        $this->withHeader('Authorization', 'Bearer '.$response->json('meta.token'))
+            ->getJson('/api/auth/user')
             ->assertOk()
             ->assertJsonPath('data.id', $user->id);
     }

@@ -38,10 +38,12 @@ class AuthController extends ApiController
         }
 
         $request->session()->regenerate();
+        $token = $request->user()->createToken('institute-web')->plainTextToken;
 
         return $this->success(
             new UserResource($request->user()),
             'Logged in successfully.',
+            meta: ['token' => $token],
         );
     }
 
@@ -55,6 +57,12 @@ class AuthController extends ApiController
 
     public function logout(Request $request): JsonResponse
     {
+        $token = $request->user()?->currentAccessToken();
+
+        if ($token !== null && method_exists($token, 'delete')) {
+            $token->delete();
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

@@ -1,4 +1,4 @@
-import { apiClient, getCsrfCookie, type ApiResponse } from "@/lib/api/client";
+import { apiClient, getCsrfCookie, setAuthToken, type ApiResponse } from "@/lib/api/client";
 
 export type AuthUser = {
   id: number;
@@ -14,11 +14,17 @@ export type AuthUser = {
 export async function login(payload: { email: string; password: string }) {
   await getCsrfCookie();
   const response = await apiClient.post<ApiResponse<AuthUser>>("/auth/login", payload);
+  setAuthToken(response.data.meta?.token ?? null);
+
   return response.data.data;
 }
 
 export async function logout() {
-  await apiClient.post<ApiResponse<null>>("/auth/logout");
+  try {
+    await apiClient.post<ApiResponse<null>>("/auth/logout");
+  } finally {
+    setAuthToken(null);
+  }
 }
 
 export async function getCurrentUser() {
