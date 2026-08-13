@@ -2,7 +2,9 @@
 
 import { BarChart3, BookOpen, Home, Receipt, Settings, Users } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-provider";
+import { cn } from "@/lib/utils";
 
 const items = [
   { label: "Home", icon: Home, href: "/" },
@@ -15,6 +17,7 @@ const items = [
 
 export function MobileNavigation() {
   const auth = useAuth();
+  const pathname = usePathname();
   const permissions = auth.data?.permissions ?? [];
   const visibleItems = items
     .filter((item) => !item.permissions || item.permissions.some((permission) => permissions.includes(permission)))
@@ -22,12 +25,24 @@ export function MobileNavigation() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-slate-200 bg-white lg:hidden">
-      {visibleItems.map((item) => (
-        <Link key={item.label} href={item.href} className="flex flex-col items-center justify-center gap-1 text-[11px] font-medium text-slate-500 first:text-slate-950">
-          <item.icon className="h-5 w-5" />
-          {item.label}
-        </Link>
-      ))}
+      {visibleItems.map((item) => {
+        const isActive = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            aria-current={isActive ? "page" : undefined}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 text-[11px] font-medium text-slate-500 transition-colors",
+              isActive && "text-slate-950",
+            )}
+          >
+            <item.icon className="h-5 w-5" />
+            {item.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

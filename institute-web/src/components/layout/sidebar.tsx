@@ -2,6 +2,7 @@
 
 import { Award, BarChart3, BookOpen, CalendarClock, CalendarDays, ClipboardList, GraduationCap, History, LayoutDashboard, Receipt, Settings, UserCog, UserPlus, UserRoundCheck, Users } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-provider";
 
@@ -26,6 +27,7 @@ const navItems = [
 
 export function Sidebar({ className }: { className?: string }) {
   const auth = useAuth();
+  const pathname = usePathname();
   const visibleItems = navItems.filter((item) => {
     if (!item.permissions) {
       return true;
@@ -47,19 +49,24 @@ export function Sidebar({ className }: { className?: string }) {
         </div>
       </div>
       <nav className="mt-8 space-y-1">
-        {visibleItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={cn(
-              "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950",
-              item.label === "Dashboard" && "bg-slate-950 text-white shadow-sm hover:bg-slate-900 hover:text-white",
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </Link>
-        ))}
+        {visibleItems.map((item) => {
+          const isActive = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950",
+                isActive && "bg-slate-950 text-white shadow-sm hover:bg-slate-900 hover:text-white",
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );

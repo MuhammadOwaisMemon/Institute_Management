@@ -26,8 +26,12 @@ export function UsersPage() {
     enabled: auth.data?.role === "admin",
   });
 
+  if (auth.isLoading || !auth.data) {
+    return <LoadingSkeleton className="h-80" />;
+  }
+
   if (auth.data && auth.data.role !== "admin") {
-    return <ErrorState title="Access restricted" description="Only admins can manage staff users." />;
+    return <ErrorState title="Admin permission required" description="Only admin users can manage staff accounts." />;
   }
 
   const columns: Column<ManagedUser>[] = [
@@ -77,7 +81,7 @@ export function UsersPage() {
         </div>
 
         {usersQuery.isLoading ? <LoadingSkeleton className="h-64" /> : null}
-        {usersQuery.isError ? <ErrorState title="Users could not load" description="Please check your access and try again." onRetry={() => usersQuery.refetch()} /> : null}
+        {usersQuery.isError ? <ErrorState title="Users could not load" description="The API could not return staff users. Please retry after logging in as an admin." onRetry={() => usersQuery.refetch()} /> : null}
         {usersQuery.data && usersQuery.data.users.length > 0 ? <DataTable columns={columns} data={usersQuery.data.users} /> : null}
         {usersQuery.data && usersQuery.data.users.length === 0 ? <EmptyState icon={Users} title="No users found" description="Add staff users when you are ready to assign access." /> : null}
       </section>
