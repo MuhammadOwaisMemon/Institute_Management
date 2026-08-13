@@ -7,6 +7,15 @@ import { getCurrentUser, type AuthUser } from "./auth-api";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 
 const publicRoutes = ["/login", "/forgot-password", "/reset-password"];
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+function normalizePathname(pathname: string) {
+  if (basePath && pathname.startsWith(basePath)) {
+    return pathname.slice(basePath.length) || "/";
+  }
+
+  return pathname;
+}
 
 export function useAuth() {
   return useQuery({
@@ -24,17 +33,18 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const auth = useAuth();
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  const normalizedPathname = normalizePathname(pathname);
+  const isPublicRoute = publicRoutes.some((route) => normalizedPathname.startsWith(route));
 
   useEffect(() => {
     if (!isPublicRoute && auth.isError) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      router.replace(`/login?next=${encodeURIComponent(normalizedPathname)}`);
     }
 
     if (isPublicRoute && auth.data) {
       router.replace("/");
     }
-  }, [auth.data, auth.isError, isPublicRoute, pathname, router]);
+  }, [auth.data, auth.isError, isPublicRoute, normalizedPathname, router]);
 
   if (auth.isLoading && !isPublicRoute) {
     return (

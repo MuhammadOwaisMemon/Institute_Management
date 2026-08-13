@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import {
   Banknote,
   CalendarClock,
@@ -15,13 +16,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth/auth-provider";
 import type { Enrollment } from "@/features/admissions/admissions-api";
 import type { Batch } from "@/features/batches/batches-api";
 import type { FeeInstallment } from "@/features/fees/fees-api";
@@ -45,13 +49,36 @@ const quickActions = [
 ];
 
 export function DashboardPage() {
-  const dashboard = useQuery({ queryKey: ["dashboard"], queryFn: getDashboard, staleTime: 60_000 });
+  const router = useRouter();
+  const auth = useAuth();
+  const dashboard = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: getDashboard,
+    enabled: Boolean(auth.data),
+    retry: (failureCount, error) => !isUnauthorizedError(error) && failureCount < 1,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (dashboard.isError && isUnauthorizedError(dashboard.error)) {
+      router.replace("/login");
+    }
+  }, [dashboard.error, dashboard.isError, router]);
+
+  if (auth.isLoading || !auth.data || dashboard.isLoading) {
+    return (
+      <>
+        <DashboardHeader />
+        <DashboardSkeleton />
+      </>
+    );
+  }
 
   if (dashboard.isError) {
     return (
       <>
         <DashboardHeader />
-        <ErrorState title="Dashboard could not load" description="Please check the API connection and try again." onRetry={() => dashboard.refetch()} />
+        <ErrorState title="Dashboard could not load" description={dashboardErrorDescription(dashboard.error)} onRetry={() => dashboard.refetch()} />
       </>
     );
   }
@@ -77,6 +104,24 @@ export function DashboardPage() {
       ) : null}
     </>
   );
+}
+
+function isUnauthorizedError(error: unknown) {
+  return isAxiosError(error) && error.response?.status === 401;
+}
+
+function dashboardErrorDescription(error: unknown) {
+  if (isAxiosError(error)) {
+    if (error.response?.status === 403) {
+      return "Your user role does not have permission to view the dashboard.";
+    }
+
+    if (error.response?.status) {
+      return "The API responded with an error. Please retry after a moment.";
+    }
+  }
+
+  return "Please check the API connection and try again.";
 }
 
 function DashboardHeader() {
