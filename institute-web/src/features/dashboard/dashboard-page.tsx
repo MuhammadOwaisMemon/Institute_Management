@@ -25,7 +25,6 @@ import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/features/auth/auth-provider";
 import type { Enrollment } from "@/features/admissions/admissions-api";
 import type { Batch } from "@/features/batches/batches-api";
 import type { FeeInstallment } from "@/features/fees/fees-api";
@@ -50,11 +49,9 @@ const quickActions = [
 
 export function DashboardPage() {
   const router = useRouter();
-  const auth = useAuth();
   const dashboard = useQuery({
     queryKey: ["dashboard"],
     queryFn: getDashboard,
-    enabled: Boolean(auth.data),
     retry: (failureCount, error) => !isUnauthorizedError(error) && failureCount < 1,
     staleTime: 60_000,
   });
@@ -65,7 +62,7 @@ export function DashboardPage() {
     }
   }, [dashboard.error, dashboard.isError, router]);
 
-  if (auth.isLoading || !auth.data || dashboard.isLoading) {
+  if (dashboard.isLoading || (dashboard.isError && isUnauthorizedError(dashboard.error))) {
     return (
       <>
         <DashboardHeader />

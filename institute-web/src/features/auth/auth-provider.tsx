@@ -17,10 +17,11 @@ function normalizePathname(pathname: string) {
   return pathname;
 }
 
-export function useAuth() {
+export function useAuth(enabled = true) {
   return useQuery({
     queryKey: ["auth-user"],
     queryFn: getCurrentUser,
+    enabled,
     retry: false,
   });
 }
@@ -32,19 +33,16 @@ export function setAuthUser(queryClient: ReturnType<typeof useQueryClient>, user
 export function AuthGate({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const auth = useAuth();
   const normalizedPathname = normalizePathname(pathname);
   const isPublicRoute = publicRoutes.some((route) => normalizedPathname.startsWith(route));
+  const auth = useAuth(!isPublicRoute);
 
   useEffect(() => {
     if (!isPublicRoute && auth.isError) {
       router.replace(`/login?next=${encodeURIComponent(normalizedPathname)}`);
     }
 
-    if (isPublicRoute && auth.data) {
-      router.replace("/");
-    }
-  }, [auth.data, auth.isError, isPublicRoute, normalizedPathname, router]);
+  }, [auth.isError, isPublicRoute, normalizedPathname, router]);
 
   if (auth.isLoading && !isPublicRoute) {
     return (
