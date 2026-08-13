@@ -18,6 +18,8 @@ const items = [
 export function MobileNavigation() {
   const auth = useAuth();
   const pathname = usePathname();
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  const currentPath = basePath && pathname.startsWith(basePath) ? pathname.slice(basePath.length) || "/" : pathname;
   const permissions = auth.data?.permissions ?? [];
   const visibleItems = items
     .filter((item) => !item.permissions || item.permissions.some((permission) => permissions.includes(permission)))
@@ -26,7 +28,7 @@ export function MobileNavigation() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-slate-200 bg-white lg:hidden">
       {visibleItems.map((item) => {
-        const isActive = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const isActive = item.href === "/" ? currentPath === "/" : currentPath === item.href || currentPath.startsWith(`${item.href}/`);
 
         return (
           <Link

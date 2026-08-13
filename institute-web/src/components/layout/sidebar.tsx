@@ -28,6 +28,8 @@ const navItems = [
 export function Sidebar({ className }: { className?: string }) {
   const auth = useAuth();
   const pathname = usePathname();
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  const currentPath = basePath && pathname.startsWith(basePath) ? pathname.slice(basePath.length) || "/" : pathname;
   const visibleItems = navItems.filter((item) => {
     if (!item.permissions) {
       return true;
@@ -50,7 +52,7 @@ export function Sidebar({ className }: { className?: string }) {
       </div>
       <nav className="mt-8 space-y-1">
         {visibleItems.map((item) => {
-          const isActive = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive = item.href === "/" ? currentPath === "/" : currentPath === item.href || currentPath.startsWith(`${item.href}/`);
 
           return (
             <Link

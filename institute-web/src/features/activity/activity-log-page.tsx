@@ -44,8 +44,12 @@ export function ActivityLogPage() {
     enabled: auth.data?.role === "admin",
   });
 
+  if (auth.isLoading || !auth.data) {
+    return <LoadingSkeleton className="h-80" />;
+  }
+
   if (auth.data && auth.data.role !== "admin") {
-    return <ErrorState title="Access restricted" description="Only admins can view activity logs." />;
+    return <ErrorState title="Admin permission required" description="Only admin users can view activity logs." />;
   }
 
   const columns: Column<ActivityLog>[] = [
@@ -76,7 +80,7 @@ export function ActivityLogPage() {
         </div>
 
         {logs.isLoading ? <LoadingSkeleton className="h-64" /> : null}
-        {logs.isError ? <ErrorState title="Activity logs could not load" description="Please check your access and try again." onRetry={() => logs.refetch()} /> : null}
+        {logs.isError ? <ErrorState title="Activity logs could not load" description="The API could not return activity logs. Please retry after logging in as an admin." onRetry={() => logs.refetch()} /> : null}
         {logs.data && logs.data.data.length > 0 ? <DataTable columns={columns} data={logs.data.data} /> : null}
         {logs.data && logs.data.data.length === 0 ? <EmptyState icon={ShieldCheck} title="No activity found" description="Important audited actions will appear here." /> : null}
         <div className="mt-4 flex items-center justify-between">
