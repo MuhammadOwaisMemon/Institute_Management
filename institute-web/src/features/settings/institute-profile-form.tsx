@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { FormField, FieldHint } from "@/components/forms/form-field";
 import { ErrorState } from "@/components/feedback/error-state";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
+import { useAuth } from "@/features/auth/auth-provider";
 import { getInstituteProfile, updateInstituteProfile, uploadInstituteLogo, type InstituteProfilePayload } from "./institute-profile-api";
 
 const profileSchema = z.object({
@@ -37,9 +38,11 @@ function emptyToNull(value: string) {
 
 export function InstituteProfileForm() {
   const queryClient = useQueryClient();
+  const auth = useAuth();
   const profileQuery = useQuery({
     queryKey: ["institute-profile"],
     queryFn: getInstituteProfile,
+    enabled: auth.data?.role === "admin",
   });
 
   const form = useForm<ProfileFormValues>({
@@ -93,7 +96,7 @@ export function InstituteProfileForm() {
     },
   });
 
-  if (profileQuery.isLoading) {
+  if (auth.isLoading || profileQuery.isLoading) {
     return (
       <div className="space-y-5">
         <LoadingSkeleton className="h-40" />
@@ -102,8 +105,12 @@ export function InstituteProfileForm() {
     );
   }
 
+  if (auth.data && auth.data.role !== "admin") {
+    return <ErrorState title="Admin permission required" description="Only admin users can manage institute settings." />;
+  }
+
   if (profileQuery.isError) {
-    return <ErrorState title="Settings could not load" description="Please check that the API server is running." onRetry={() => profileQuery.refetch()} />;
+    return <ErrorState title="Settings could not load" description="The API could not return institute settings. Please retry after logging in as an admin." onRetry={() => profileQuery.refetch()} />;
   }
 
   function onSubmit(values: ProfileFormValues) {
