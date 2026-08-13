@@ -44,6 +44,28 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      setAuthToken(null);
+
+      if (typeof window !== "undefined") {
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+        const loginPath = `${basePath}/login`;
+
+        if (!window.location.pathname.endsWith("/login")) {
+          // Axios interceptors run outside React components, so use a hard redirect for expired auth.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = `${loginPath}?next=${encodeURIComponent(window.location.pathname.replace(basePath, "") || "/")}`;
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
 export async function getCsrfCookie() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api";
   const baseUrl = apiUrl.replace(/\/api\/?$/, "");
